@@ -191,11 +191,78 @@ def maxFrequency(df, column):
     
     '''
     Given a 'column' of 'df' dataframe, it returns the most frequent
-    element.
+    element and it's frequency.
     '''
     aux = list(map(list, zip(*list(Counter(df[column]).items()))))
-    d0 = aux[0]
-    d1 = [round(x / sum(aux[1]), 2) for x in aux[1]]
-    dOut = d0[d1.index(max(d1))]
     
-    return(dOut)
+	# Elements
+    d0 = aux[0]
+	
+	# Frequency
+    d1 = [round(x / sum(aux[1]), 2) for x in aux[1]]
+	
+	# Most common element frequency
+    maxFreq = max(d1)
+	
+	# Most common element
+    maxElem = d0[d1.index(maxFreq)]
+    
+    return(maxElem, maxFreq)
+
+
+def seriesSummary(df, column, n):
+    
+    '''
+    Prints summary of 'df[column]'.
+    Is shows the first 'n' most frequent elements, the type of the vector, 
+    number of unique elements and number of NaNs.
+    '''
+    
+    if n == 0:
+        print(df[column].value_counts(dropna = False))
+    else:
+        print(df[column].value_counts(dropna = False).head(n))
+    
+    print('\nType: ', df[column].dtype)
+    print('Unique: ', len(df[column].unique()))
+    print('NaNs: ', len(df[column]) - df[column].count())
+    
+	
+def dfSummary(df):
+    
+    '''
+    Prints summary of DF containing columns type, number of unique
+    values and number of NaN values.
+    '''
+    
+    import io
+    buffer = io.StringIO()
+    
+    df.info(buf=buffer)
+    s = buffer.getvalue().split('\n')
+    
+    index = s[1]
+    ncol = s[2]
+    
+    print(index)
+    print(ncol)
+    print()
+    
+    colNames = []
+    colTypes = []
+    for row in s[3:-3]:
+        r = row.split(' ')
+        colNames += [r[0]]
+        colTypes += [r[-1]]
+    
+    dfOut = pd.DataFrame(data = colTypes, index = colNames, columns = ['colType'])
+    
+    unique = df.apply(lambda x: x.nunique())
+    unique = pd.DataFrame(data = unique.values, index = unique.index, columns = ['Unique'])
+    dfOut = pd.merge(dfOut, unique, left_index = True, right_index = True)
+    
+    nans = df.shape[0] - df.count(axis = 0)
+    nans = pd.DataFrame(data = nans.values, index = nans.index, columns = ['NaN'])
+    dfOut = pd.merge(dfOut, nans, left_index = True, right_index = True)
+    
+    print(dfOut)
